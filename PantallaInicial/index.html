@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+     integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+     <link rel="stylesheet" href="./index.css">
+    <title>Document</title>
+</head>
+<body>
+   
+    <video autoplay muted loop id="myVideo">
+        <source src="./grid1.mp4" type="video/mp4">
+      </video>
+    <div class="container-lg">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <a href="#">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        Un jugador
+                    </a>
+                </div>
+                <div class="col-12">
+                    <a href="#" >
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        Multijugador
+                    </a>
+                </div>
+                <div class="col-12">
+                    <a href="#" data-bs-toggle="modal" 
+                    data-bs-target="#modalPuntuaciones">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        Puntuaciones
+                    </a>
+                </div>
+                <div class="col-4">
+                    <a href="#" >
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        Iniciar sesión google
+                    </a>
+                </div>
+                <div class="col">
+                    <div class="row">
+                        <div class="col-4">
+                            <a href="#" >
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                Nivel 1
+                            </a>
+                        </div>
+                        <div class="col-4">
+                            <a href="#" >
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                Nivel 2
+                            </a>
+                        </div>
+                        <div class="col-4">
+                            <a href="#" >
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                Nivel 3
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <a href="#" data-bs-toggle="modal" 
+                    data-bs-target="#exampleModal">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        Configuración
+                    </a>
+                </div>
+                
+            </div>
+        </div>
+        <!-- Modal configuración -->
+        <div class="modal fade" id="exampleModal" tabindex="-1"
+         aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Configuración</h5>
+                <button type="button" class="btn-close" 
+                data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="customRange1" class="form-label">Musica</label>
+                    <input type="range" class="form-range" id="customRange1">
+                    <label for="customRange1" class="form-label">Efectos</label>
+                    <input type="range" class="form-range" id="customRange1">
+                </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                 </div>
+            </div>
+            </div>
+        </div>
+        <!-- Modal puntuaciones -->
+        <div class="modal fade" id="modalPuntuaciones" tabindex="-1"
+         aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Puntuaciones</h5>
+                <button type="button" class="btn-close" 
+                data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h5>Popover in a modal</h5>
+                    <hr>
+                    <h5>Tooltips in a modal</h5>
+                    <hr>
+                    <h5>Tooltips in a modal</h5>
+                    <hr>
+                    <h5>Tooltips in a modal</h5>
+                    <hr>
+                    <h5>Tooltips in a modal</h5>
+                  </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                 </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <script src="/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" 
+    integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" 
+    integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
+</body>
+</html>
