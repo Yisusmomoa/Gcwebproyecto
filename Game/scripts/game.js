@@ -3,10 +3,20 @@ class Game{
     OBSTACLE_PREFAB=new THREE.BoxBufferGeometry(1,1,1);
     OBSTACLE_MATERIAL=new THREE.MeshBasicMaterial({color:0xccdeee});
     BONUS_PREFAB=new THREE.SphereBufferGeometry(1,12,12);
-
+    COLLISION_THRESHOLD=0.2;
     constructor(scene,camera){
         //inicializa las variables
         this.speedZ = 25;
+        this.speedX=0;//-1 a 1
+        this.translateX=0;
+
+        this.health=100;
+        this.score=0;
+        
+        this.divHealth=document.getElementById('health');
+        this.divScore=document.getElementById('score');
+
+        this.rotationLerp=null;
         //prepare 3d scene
         //bind event callbacks
 
@@ -16,8 +26,14 @@ class Game{
 
     }
     update(){
-       
-        this.time+=this.clock.getDelta();
+        const timeDelta=this.clock.getDelta();
+        this.time+=timeDelta;
+        if (this.rotationLerp!==null) {
+            this.rotationLerp.update(timeDelta);
+        }
+
+        this.time+=this.clock.getDelta();// xd
+        this.translateX+=this.speedX*-0.05;
 
         //event handling
         //recompute the game state
@@ -30,14 +46,42 @@ class Game{
 
     _keydown(event){
         //check for the key to move the ship accordingly
+        let newSpeedX;
+        switch (event.key) {
+            case 'ArrowLeft':
+                newSpeedX=-1.0;
+                break;
+            case 'ArrowRight':
+                newSpeedX=1.0;
+                break;
+        
+            default:
+                return;
+        }
+    if(this.speedX!==newSpeedX){
+        this.speedX=newSpeedX;
+        this._rotateShipe(-this.speedX*20*Math.PI/180,0.8);
+    }
+        this.speedX=newSpeedX;
     }
     _keyup(){
+        this.speedX=0;
+        this._rotateShipe(0,0.5);
+    }
 
+    _rotateShipe(targetRotation,delay){
+        const $this=this;
+        this.rotationLerp=new Lerp(this.ship.rotation.z,targetRotation,delay)
+        .onUpdate((value)=>{ $this.ship.rotation.z=value})
+        .onFinish(()=>{ $this.rotationLerp=null});
     }
     
     _updateGrid(){
         this.grid.material.uniforms.time.value=this.time;
         this.objectsParent.position.z=this.speedZ*this.time;
+
+        this.grid.material.uniforms.translateX.value=this.translateX;
+        this.objectsParent.position.x=this.translateX;
 
         this.objectsParent.traverse((child)=>{
             if(child instanceof THREE.Mesh){
@@ -45,11 +89,13 @@ class Game{
                 const childZPos=child.position.z+this.objectsParent.position.z;
                 if(childZPos>0){
                     //reset the object
+                    const params=[child,-this.translateX,-this.objectsParent.position.z]
                     if(child.userData.type==='obstacle'){
-                        this._setupObstacle(child,this.ship.position.x,-this.objectsParent.position.z)
+                        this._setupObstacle(...params);
                     }
                     else{
-                        this._setupBonus(child,this.ship.position.x,-this.objectsParent.position.z)
+                        const price=this._setupBonus(...params);
+                        child.userData.price=price;
                     }
                 }
             }
@@ -59,8 +105,31 @@ class Game{
     }
 
     _checkCollisions(){
-        //obstacles
-        //bonus
+        this.objectsParent.traverse((child)=>{
+            if(child instanceof THREE.Mesh){
+                //pos in world space
+                const childZPos=child.position.z+this.objectsParent.position.z;
+                //distancias 
+                const thresholdX=this.COLLISION_THRESHOLD+child.scale.x/2;
+                const thresholdZ=this.COLLISION_THRESHOLD+child.scale.z/2;
+
+                if(childZPos>-thresholdZ &&
+                    Math.abs(child.position.x-(-this.translateX))<thresholdX ){
+                        //colision
+                    const params=[child,-this.translateX,-this.objectsParent.position.z]
+                        if(child.userData.type==='obstacle'){
+                            this.health-=10;
+                            this.divHealth.innerText=this.health; //se pinta la salud
+                            this._setupObstacle(...params);
+                        }
+                        else{
+                            this.score+=child.userData.price;
+                            this.divScore.innerText=this.score;
+                            child.userData.price=this._setupBonus(...params);
+                        }
+                }
+            }
+        });
 
     }
 
@@ -135,15 +204,21 @@ class Game{
         this.grid = new THREE.GridHelper(gridLimit * 2, divisions, 0xccddee, 0xccddee);
     
         const moveableZ = [];
+        const moveableX = [];
         for (let i = 0; i <= divisions; i++) {
-          moveableZ.push(1, 1, 0, 0); // move horizontal lines only (1 - point is moveable)
+            moveableX.push(0, 0, 1, 1); // move horizontal lines only (1 - point is moveable)
+            moveableZ.push(1, 1, 0, 0); // move horizontal lines only (1 - point is moveable)
         }
+        this.grid.geometry.setAttribute('moveableX', new THREE.BufferAttribute(new Uint8Array(moveableX), 1));
         this.grid.geometry.setAttribute('moveableZ', new THREE.BufferAttribute(new Uint8Array(moveableZ), 1));
     
         this.grid.material = new THREE.ShaderMaterial({
           uniforms: {
             speedZ: {
               value: this.speedZ
+            },
+            translateX: {
+                value: this.translateX
             },
             gridLimits: {
               value: new THREE.Vector2(-gridLimit, gridLimit)
@@ -156,7 +231,9 @@ class Game{
             uniform float time;
             uniform vec2 gridLimits;
             uniform float speedZ;
+            uniform float translateX;
             
+            attribute float moveableX;
             attribute float moveableZ;
             
             varying vec3 vColor;
@@ -165,6 +242,11 @@ class Game{
               vColor = color;
               float limLen = gridLimits.y - gridLimits.x;
               vec3 pos = position;
+              if (floor(moveableX + 0.5) > 0.5) { // if a point has "moveableZ" attribute = 1 
+                float xDist = translateX;
+                float curXPos = mod((pos.x + xDist) - gridLimits.x, limLen) + gridLimits.x;
+                pos.x = curXPos;
+              }
               if (floor(moveableZ + 0.5) > 0.5) { // if a point has "moveableZ" attribute = 1 
                 float zDist = speedZ * time;
                 float curZPos = mod((pos.z + zDist) - gridLimits.x, limLen) + gridLimits.x;
@@ -241,8 +323,8 @@ class Game{
             this.BONUS_PREFAB,
             new THREE.MeshBasicMaterial({color:0x000000})
         );
-        this._setupBonus(obj);
-        obj.userData={type:'bonus'};
+        const price=this._setupBonus(obj);
+        obj.userData={type:'bonus',price};
         this.objectsParent.add(obj);
     }
 
@@ -261,6 +343,7 @@ class Game{
             obj.scale.y*0.5,
             refZPos-100-this._randomFloat(0,100)
         );
+        return price;
     }
 
     _randomFloat(min,max){

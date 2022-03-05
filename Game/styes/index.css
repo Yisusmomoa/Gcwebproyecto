@@ -1,0 +1,10 @@
+body{
+    margin: 0;
+}
+
+#info{
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: white;
+}
