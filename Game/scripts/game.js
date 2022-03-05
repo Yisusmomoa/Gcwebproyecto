@@ -6,26 +6,42 @@ class Game{
     COLLISION_THRESHOLD=0.2;
     constructor(scene,camera){
         //inicializa las variables
-        this.speedZ = 25;
-        this.speedX=0;//-1 a 1
-        this.translateX=0;
-
-        this.health=100;
-        this.score=0;
+        
         
         this.divHealth=document.getElementById('health');
         this.divScore=document.getElementById('score');
+        this.divDistance=document.getElementById('distance');
 
-        this.rotationLerp=null;
+        this.divGameOverPanel=document.getElementById('game-over-panel');
+        this.divGameOverScore=document.getElementById('game-over-score');
+        this.divGameOverDistance=document.getElementById('game-over-distance');
+
+
+        
+
         //prepare 3d scene
         //bind event callbacks
+        
+       
+        document.getElementById('start-button').onclick=()=>{
+            this.running=true;
+            document.getElementById('intro-panel').style.display='none';
+        }
+        document.getElementById('replay-button').onclick=()=>{
+            this.running=true;
+            this.divGameOverPanel.style.display='none'
+        }
 
-        this._initializeScene(scene,camera);
+        this.scene=scene;
+        this.camera=camera;
+        this._reset(false);
+
         document.addEventListener('keydown',this._keydown.bind(this));
         document.addEventListener('keyup',this._keyup.bind(this));
-
     }
     update(){
+        if(!this.running)
+            return;
         const timeDelta=this.clock.getDelta();
         this.time+=timeDelta;
         if (this.rotationLerp!==null) {
@@ -43,6 +59,28 @@ class Game{
 
     }
 
+    _reset(replay){
+        this.running=false; 
+
+        this.speedZ = 25;
+        this.speedX=0;//-1 a 1
+        this.translateX=0;
+        
+        this.time=0;
+        this.clock=new THREE.Clock();
+
+        this.health=10;
+        this.score=0;
+
+        this.rotationLerp=null;
+
+        this.divScore.innerText=this.score;
+        this.divDistance.innerText=0;
+        this.divHealth.value=this.health;
+
+        this._initializeScene(this.scene,this.camera,replay);
+
+    }
 
     _keydown(event){
         //check for the key to move the ship accordingly
@@ -119,8 +157,11 @@ class Game{
                     const params=[child,-this.translateX,-this.objectsParent.position.z]
                         if(child.userData.type==='obstacle'){
                             this.health-=10;
-                            this.divHealth.innerText=this.health; //se pinta la salud
+                            this.divHealth.value=this.health; //se pinta la salud
                             this._setupObstacle(...params);
+                            if(this.health<=0){
+                                this._gameOver();
+                            }
                         }
                         else{
                             this.score+=child.userData.price;
@@ -130,16 +171,23 @@ class Game{
                 }
             }
         });
-
     }
 
     _updateInfoPanel(){
-
+        this.divDistance.innerText=this.objectsParent.position.z.toFixed(0);
     }
 
     _gameOver(){
         //prepare end state
+        this.running=false;
         //show ui
+        this.divGameOverScore.innerText=this.score;
+        this.divGameOverDistance.innerText=this.objectsParent.position.z.toFixed(0);
+        setTimeout(() => {
+            this.divGameOverPanel.style.display='grid';
+            //reset variables
+            this._reset(true);
+        },1000);
         //reset variables
 
     }
@@ -266,25 +314,44 @@ class Game{
         });
     
         scene.add(this.grid);
-        this.time=0;
-        this.clock=new THREE.Clock();
       }
-    _initializeScene(scene,camera){
-        this._createShip(scene);
-        this._createGrid(scene);
+    _initializeScene(scene,camera,replay){
+        if(!replay){
+            this._createShip(scene);
+            this._createGrid(scene);
 
-        this.objectsParent=new THREE.Group();
-        scene.add(this.objectsParent);
+            this.objectsParent=new THREE.Group();
+            scene.add(this.objectsParent);
 
-        for(let i=0; i<10;i++){
-            this._spawnObstacle();
+            for(let i=0; i<10;i++){
+                this._spawnObstacle();
+            }
+            for(let i=0; i<10;i++){
+                this._spawnBonus();
+            }
+
+            camera.rotateX(-20*Math.PI/180);
+            camera.position.set(0,1.5,2);
         }
-        for(let i=0; i<10;i++){
-            this._spawnBonus();
+        else{
+            //replay
+            this.objectsParent.traverse((item)=>{
+                if(item instanceof THREE.Mesh){
+                    //child item
+                    if(item.userData.type==='obstacle'){
+                        this._setupObstacle(item);
+                    }
+                    else{
+                        item.userData.price=this._setupBonus(item);
+                    }
+                }
+                else{
+                    //the anchor itself
+                    item.position.set(0,0,0);
+                }
+            });
         }
-
-        camera.rotateX(-20*Math.PI/180);
-        camera.position.set(0,1.5,2);
+        
 
     }
 
